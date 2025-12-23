@@ -4,6 +4,7 @@ import (
 	"flight-aggregator/internal/models"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // ValidationError represents a validation error
@@ -44,9 +45,26 @@ func (v *Validator) ValidateSearchRequest(req models.SearchRequest) error {
 		}
 	}
 
-	// Validate departure date (basic format check)
-	if req.DepartureDate == "" {
-		return ValidationError{Field: "DepartureDate", Message: "departure date is required"}
+	// Validate departure date
+	departureDate, err := v.validateDate(req.DepartureDate, "DepartureDate")
+	if err != nil {
+		return err
+	}
+
+	// Validate return date if provided
+	if req.ReturnDate != nil && *req.ReturnDate != "" {
+		returnDate, err := v.validateDate(*req.ReturnDate, "ReturnDate")
+		if err != nil {
+			return err
+		}
+
+		// Return date must be on or after departure date
+		if returnDate.Before(departureDate) {
+			return ValidationError{
+				Field:   "ReturnDate",
+				Message: "return date must be on or after departure date",
+			}
+		}
 	}
 
 	// Validate passengers
@@ -76,6 +94,13 @@ func (v *Validator) ValidateSearchRequest(req models.SearchRequest) error {
 	// Validate filters if provided
 	if req.Filters != nil {
 		if err := v.ValidateFilters(*req.Filters); err != nil {
+			return err
+		}
+	}
+
+	// Validate return filters if provided
+	if req.ReturnFilters != nil {
+		if err := v.ValidateFilters(*req.ReturnFilters); err != nil {
 			return err
 		}
 	}
@@ -179,4 +204,44 @@ func (v *Validator) validateTimeRange(timeRange models.TimeRange, field string) 
 	}
 
 	return nil
+}
+
+// validateDate validates date format and returns parsed time
+func (v *Validator) validateDate(dateStr, field string) (time.Time, error) {
+	if dateStr == "" {
+		return time.Time{}, ValidationError{
+			Field:   field,
+			Message: "date is required",
+		}
+	}
+
+	// Try common date formats
+	formats := []string{
+		"2006-01-02",
+		"2006/01/02",
+		"02-01-2006",
+		"02/01/2006",
+	}
+
+	var parsedDate time.Time
+	var lastErr error
+
+	for _, format := range formats {
+		date, err := time.Parse(format, dateStr)
+		if err == nil {
+			parsedDate = date
+			lastErr = nil
+			break
+		}
+		lastErr = err
+	}
+
+	if lastErr != nil {
+		return time.Time{}, ValidationError{
+			Field:   field,
+			Message: "invalid date format (expected YYYY-MM-DD, YYYY/MM/DD, DD-MM-YYYY, or DD/MM/YYYY)",
+		}
+	}
+
+	return parsedDate, nil
 }

@@ -16,6 +16,20 @@
       "baggage_note": "Cabin baggage only, checked bags additional fee"
     },
     {
+      "flight_code": "QZ521",
+      "airline": "AirAsia",
+      "from_airport": "DPS",
+      "to_airport": "CGK",
+      "depart_time": "2025-12-20T04:45:00+08:00",
+      "arrive_time": "2025-12-20T07:25:00+07:00",
+      "duration_hours": 1.67,
+      "direct_flight": true,
+      "price_idr": 650000,
+      "seats": 67,
+      "cabin_class": "economy",
+      "baggage_note": "Cabin baggage only, checked bags additional fee"
+    },
+    {
       "flight_code": "QZ524",
       "airline": "AirAsia",
       "from_airport": "CGK",

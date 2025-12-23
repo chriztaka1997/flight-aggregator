@@ -185,7 +185,7 @@ curl -X POST http://localhost:8080/search \
     "origin": "CGK",
     "destination": "DPS",
     "departureDate": "2025-12-15",
-    "returnDate": "2025-12-22", //TODO: in progress
+    "returnDate": "2025-12-22",
     "passengers": 2,
     "cabinClass": "economy",
     "filters": {
@@ -204,7 +204,12 @@ curl -X POST http://localhost:8080/search \
       "maxDuration": 180
     },
     "sortBy": "price",
-    "sortOrder": "asc"
+    "sortOrder": "asc",
+    "returnFilters": {
+        "maxPrice": 650000
+      },
+      "returnSortBy": "",
+      "returnSortOrder": ""
   }'
 ```
 

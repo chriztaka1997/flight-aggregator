@@ -9,15 +9,18 @@ type ErrorResponse struct {
 
 // SearchRequest represents a flight search request
 type SearchRequest struct {
-	Origin        string         `json:"origin" validate:"required,len=3"`
-	Destination   string         `json:"destination" validate:"required,len=3"`
-	DepartureDate string         `json:"departureDate" validate:"required"`
-	ReturnDate    *string        `json:"returnDate,omitempty"`
-	Passengers    int            `json:"passengers" validate:"min=1"`
-	CabinClass    string         `json:"cabinClass" validate:"required"`
-	Filters       *FilterOptions `json:"filters,omitempty"`
-	SortBy        string         `json:"sortBy,omitempty"`
-	SortOrder     string         `json:"sortOrder,omitempty"`
+	Origin          string         `json:"origin" validate:"required,len=3"`
+	Destination     string         `json:"destination" validate:"required,len=3"`
+	DepartureDate   string         `json:"departureDate" validate:"required"`
+	ReturnDate      *string        `json:"returnDate,omitempty"`
+	Passengers      int            `json:"passengers" validate:"min=1"`
+	CabinClass      string         `json:"cabinClass" validate:"required"`
+	Filters         *FilterOptions `json:"filters,omitempty"`
+	SortBy          string         `json:"sortBy,omitempty"`
+	SortOrder       string         `json:"sortOrder,omitempty"`
+	ReturnFilters   *FilterOptions `json:"returnFilters,omitempty"`
+	ReturnSortBy    string         `json:"returnSortBy,omitempty"`
+	ReturnSortOrder string         `json:"returnSortOrder,omitempty"`
 }
 
 // FilterOptions represents filtering criteria for flights
@@ -42,15 +45,17 @@ type SearchResponse struct {
 	SearchCriteria SearchCriteria `json:"search_criteria"`
 	Metadata       SearchMetadata `json:"metadata"`
 	Flights        []Flight       `json:"flights"`
+	ReturnFlights  []Flight       `json:"return_flights"`
 }
 
 // SearchCriteria represents the search parameters used for the query
 type SearchCriteria struct {
-	Origin        string `json:"origin"`
-	Destination   string `json:"destination"`
-	DepartureDate string `json:"departure_date"`
-	Passengers    int    `json:"passengers"`
-	CabinClass    string `json:"cabin_class"`
+	Origin        string  `json:"origin"`
+	Destination   string  `json:"destination"`
+	DepartureDate string  `json:"departure_date"`
+	ReturnDate    *string `json:"return_date,omitempty"`
+	Passengers    int     `json:"passengers"`
+	CabinClass    string  `json:"cabin_class"`
 }
 
 // SearchMetadata contains metadata about the search operation

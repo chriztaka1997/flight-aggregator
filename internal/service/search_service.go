@@ -149,6 +149,70 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 		flights = s.sorter.Sort(flights, req.SortBy, req.SortOrder)
 	}
 
+	// Step 6.5: Search for return flights if return date is provided
+	var returnFlights []models.Flight
+	if req.ReturnDate != nil && *req.ReturnDate != "" {
+		log.Printf("Searching for return flights on %s", *req.ReturnDate)
+
+		// Create a return flight search request (swap origin/destination)
+		returnReq := models.SearchRequest{
+			Origin:        req.Destination,
+			Destination:   req.Origin,
+			DepartureDate: *req.ReturnDate,
+			Passengers:    req.Passengers,
+			CabinClass:    req.CabinClass,
+			Filters:       req.ReturnFilters,
+			SortBy:        req.ReturnSortBy,
+			SortOrder:     req.ReturnSortOrder,
+		}
+
+		// Check cache for return flights
+		returnCacheKey := s.cache.GenerateKey(returnReq)
+		if cached, ok := s.cache.Get(returnCacheKey); ok {
+			log.Printf("Cache hit for return flights key: %s", returnCacheKey)
+			cachedResponse := cached.(*models.SearchResponse)
+			returnFlights = cachedResponse.Flights
+		} else {
+			log.Printf("Cache miss for return flights key: %s", returnCacheKey)
+
+			// Aggregate from providers for return flights
+			returnAggregated, err := s.aggregator.SearchAll(ctx, returnReq)
+			if err != nil {
+				log.Printf("Error searching return flights: %v", err)
+				if returnAggregated != nil && len(returnAggregated.Flights) > 0 {
+					log.Printf("Partial return results: got %d flights with errors", len(returnAggregated.Flights))
+				}
+			}
+
+			if returnAggregated != nil {
+				returnFlights = returnAggregated.Flights
+
+				// Apply filters if provided
+				if req.ReturnFilters != nil {
+					log.Printf("Applying filters to %d return flights", len(returnFlights))
+					returnFlights = s.filter.Apply(returnFlights, *req.ReturnFilters)
+					log.Printf("After filtering: %d return flights remaining", len(returnFlights))
+				}
+
+				// Calculate scores and rank return flights
+				if len(returnFlights) > 0 {
+					log.Printf("Scoring and ranking %d return flights", len(returnFlights))
+					scoredReturnFlights := s.scorer.ScoreFlights(returnFlights)
+					returnFlights = make([]models.Flight, len(scoredReturnFlights))
+					for i, sf := range scoredReturnFlights {
+						returnFlights[i] = sf.Flight
+					}
+				}
+
+				// Apply custom sorting if requested
+				if req.ReturnSortBy != "" {
+					log.Printf("Sorting return flights by %s (%s)", req.ReturnSortBy, req.ReturnSortOrder)
+					returnFlights = s.sorter.Sort(returnFlights, req.ReturnSortBy, req.ReturnSortOrder)
+				}
+			}
+		}
+	}
+
 	// Step 7: Build response
 	// Calculate providers succeeded and failed
 	providersSucceeded := 0
@@ -164,6 +228,7 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 			Origin:        req.Origin,
 			Destination:   req.Destination,
 			DepartureDate: req.DepartureDate,
+			ReturnDate:    req.ReturnDate,
 			Passengers:    req.Passengers,
 			CabinClass:    req.CabinClass,
 		},
@@ -177,7 +242,8 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 			ProviderResults:    aggregated.ProviderResults,
 			ProviderErrors:     aggregated.ProviderErrors,
 		},
-		Flights: flights,
+		Flights:       flights,
+		ReturnFlights: returnFlights,
 	}
 
 	// Step 8: Cache response
