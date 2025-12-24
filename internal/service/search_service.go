@@ -132,15 +132,17 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 		log.Printf("After filtering: %d flights remaining", len(flights))
 	}
 
-	// Step 5: Calculate scores and rank flights
+	// Step 5: Calculate scores and identify best value flight
+	var bestValueFlight *models.Flight
 	if len(flights) > 0 {
-		log.Printf("Scoring and ranking %d flights", len(flights))
+		log.Printf("Scoring %d flights", len(flights))
 		scoredFlights := s.scorer.ScoreFlights(flights)
-		// Extract just the flights (already sorted by score)
-		flights = make([]models.Flight, len(scoredFlights))
-		for i, sf := range scoredFlights {
-			flights[i] = sf.Flight
+		// Extract the best value flight (highest score)
+		if len(scoredFlights) > 0 {
+			bestValueFlight = &scoredFlights[0].Flight
+			log.Printf("Best value flight: %s with score %.2f", bestValueFlight.FlightNumber, scoredFlights[0].Score)
 		}
+		// Keep flights in original order (don't reorder)
 	}
 
 	// Step 6: Apply custom sorting if requested
@@ -151,6 +153,7 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 
 	// Step 6.5: Search for return flights if return date is provided
 	var returnFlights []models.Flight
+	var bestValueReturnFlight *models.Flight
 	if req.ReturnDate != nil && *req.ReturnDate != "" {
 		log.Printf("Searching for return flights on %s", *req.ReturnDate)
 
@@ -172,6 +175,10 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 			log.Printf("Cache hit for return flights key: %s", returnCacheKey)
 			cachedResponse := cached.(*models.SearchResponse)
 			returnFlights = cachedResponse.Flights
+			bestValueReturnFlight = cachedResponse.BestValueFlight
+			if bestValueReturnFlight != nil {
+				log.Printf("Best value return flight from cache: %s", bestValueReturnFlight.FlightNumber)
+			}
 		} else {
 			log.Printf("Cache miss for return flights key: %s", returnCacheKey)
 
@@ -194,14 +201,16 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 					log.Printf("After filtering: %d return flights remaining", len(returnFlights))
 				}
 
-				// Calculate scores and rank return flights
+				// Calculate scores and identify best value return flight
 				if len(returnFlights) > 0 {
-					log.Printf("Scoring and ranking %d return flights", len(returnFlights))
+					log.Printf("Scoring %d return flights", len(returnFlights))
 					scoredReturnFlights := s.scorer.ScoreFlights(returnFlights)
-					returnFlights = make([]models.Flight, len(scoredReturnFlights))
-					for i, sf := range scoredReturnFlights {
-						returnFlights[i] = sf.Flight
+					// Extract the best value return flight (highest score)
+					if len(scoredReturnFlights) > 0 {
+						bestValueReturnFlight = &scoredReturnFlights[0].Flight
+						log.Printf("Best value return flight: %s with score %.2f", bestValueReturnFlight.FlightNumber, scoredReturnFlights[0].Score)
 					}
+					// Keep return flights in original order (don't reorder)
 				}
 
 				// Apply custom sorting if requested
@@ -242,8 +251,10 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 			ProviderResults:    aggregated.ProviderResults,
 			ProviderErrors:     aggregated.ProviderErrors,
 		},
-		Flights:       flights,
-		ReturnFlights: returnFlights,
+		Flights:               flights,
+		BestValueFlight:       bestValueFlight,
+		ReturnFlights:         returnFlights,
+		BestValueReturnFlight: bestValueReturnFlight,
 	}
 
 	// Step 8: Cache response

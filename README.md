@@ -321,7 +321,7 @@ curl -X POST http://localhost:8080/search \
 - **Intelligent Caching**: Caches search results to improve performance
 - **Advanced Filtering**: Filter by price, stops, airlines, departure/arrival times, and duration
 - **Flexible Sorting**: Sort results by price, duration, departure time, or number of stops
-- **Smart Ranking**: Automatically scores and ranks flights based on multiple factors //TODO
+- **Smart Ranking**: Automatically scores and ranks flights based on multiple factors
 - **Provider Filtering**: Only queries relevant providers when airline filter is specified
 - **Error Handling**: Graceful error handling with partial results support
 - **Validation**: Comprehensive input validation for all request parameters

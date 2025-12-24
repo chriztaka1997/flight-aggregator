@@ -42,10 +42,12 @@ type TimeRange struct {
 
 // SearchResponse represents the search results
 type SearchResponse struct {
-	SearchCriteria SearchCriteria `json:"search_criteria"`
-	Metadata       SearchMetadata `json:"metadata"`
-	Flights        []Flight       `json:"flights"`
-	ReturnFlights  []Flight       `json:"return_flights"`
+	SearchCriteria        SearchCriteria `json:"search_criteria"`
+	Metadata              SearchMetadata `json:"metadata"`
+	Flights               []Flight       `json:"flights"`
+	BestValueFlight       *Flight        `json:"best_value_flight,omitempty"`
+	ReturnFlights         []Flight       `json:"return_flights,omitempty"`
+	BestValueReturnFlight *Flight        `json:"best_value_return_flight,omitempty"`
 }
 
 // SearchCriteria represents the search parameters used for the query
