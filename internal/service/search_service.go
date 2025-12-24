@@ -151,11 +151,33 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 		flights = s.sorter.Sort(flights, req.SortBy, req.SortOrder)
 	}
 
+	// Calculate providers succeeded and failed
+	providersSucceeded := 0
+	for _, count := range aggregated.ProviderResults {
+		if count > 0 {
+			providersSucceeded++
+		}
+	}
+	providersFailed := len(aggregated.ProviderErrors)
+
+	flightMetaData := models.SearchMetadata{
+		TotalResults:       len(flights),
+		ProvidersQueried:   len(aggregated.ProviderResults),
+		ProvidersSucceeded: providersSucceeded,
+		ProvidersFailed:    providersFailed,
+		SearchTimeMs:       int(time.Since(startTime).Milliseconds()),
+		CacheHit:           false,
+		ProviderResults:    aggregated.ProviderResults,
+		ProviderErrors:     aggregated.ProviderErrors,
+	}
+
 	// Step 6.5: Search for return flights if return date is provided
 	var returnFlights []models.Flight
 	var bestValueReturnFlight *models.Flight
+	var returnMetadata *models.SearchMetadata
 	if req.ReturnDate != nil && *req.ReturnDate != "" {
 		log.Printf("Searching for return flights on %s", *req.ReturnDate)
+		returnStartTime := time.Now()
 
 		// Create a return flight search request (swap origin/destination)
 		returnReq := models.SearchRequest{
@@ -176,6 +198,11 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 			cachedResponse := cached.(*models.SearchResponse)
 			returnFlights = cachedResponse.Flights
 			bestValueReturnFlight = cachedResponse.BestValueFlight
+			returnMetadata = cachedResponse.ReturnMetadata
+			if returnMetadata != nil {
+				returnMetadata.CacheHit = true
+				returnMetadata.SearchTimeMs = int(time.Since(returnStartTime).Milliseconds())
+			}
 			if bestValueReturnFlight != nil {
 				log.Printf("Best value return flight from cache: %s", bestValueReturnFlight.FlightNumber)
 			}
@@ -218,20 +245,31 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 					log.Printf("Sorting return flights by %s (%s)", req.ReturnSortBy, req.ReturnSortOrder)
 					returnFlights = s.sorter.Sort(returnFlights, req.ReturnSortBy, req.ReturnSortOrder)
 				}
+
+				// Build return metadata
+				returnProvidersSucceeded := 0
+				for _, count := range returnAggregated.ProviderResults {
+					if count > 0 {
+						returnProvidersSucceeded++
+					}
+				}
+				returnProvidersFailed := len(returnAggregated.ProviderErrors)
+
+				returnMetadata = &models.SearchMetadata{
+					TotalResults:       len(returnFlights),
+					ProvidersQueried:   len(returnAggregated.ProviderResults),
+					ProvidersSucceeded: returnProvidersSucceeded,
+					ProvidersFailed:    returnProvidersFailed,
+					SearchTimeMs:       int(time.Since(returnStartTime).Milliseconds()),
+					CacheHit:           false,
+					ProviderResults:    returnAggregated.ProviderResults,
+					ProviderErrors:     returnAggregated.ProviderErrors,
+				}
 			}
 		}
 	}
 
-	// Step 7: Build response
-	// Calculate providers succeeded and failed
-	providersSucceeded := 0
-	for _, count := range aggregated.ProviderResults {
-		if count > 0 {
-			providersSucceeded++
-		}
-	}
-	providersFailed := len(aggregated.ProviderErrors)
-
+	// Build response
 	response := &models.SearchResponse{
 		SearchCriteria: models.SearchCriteria{
 			Origin:        req.Origin,
@@ -241,23 +279,15 @@ func (s *SearchService) Search(ctx context.Context, req models.SearchRequest) (*
 			Passengers:    req.Passengers,
 			CabinClass:    req.CabinClass,
 		},
-		Metadata: models.SearchMetadata{
-			TotalResults:       len(flights),
-			ProvidersQueried:   len(aggregated.ProviderResults),
-			ProvidersSucceeded: providersSucceeded,
-			ProvidersFailed:    providersFailed,
-			SearchTimeMs:       int(time.Since(startTime).Milliseconds()),
-			CacheHit:           false,
-			ProviderResults:    aggregated.ProviderResults,
-			ProviderErrors:     aggregated.ProviderErrors,
-		},
+		Metadata:              flightMetaData,
 		Flights:               flights,
 		BestValueFlight:       bestValueFlight,
 		ReturnFlights:         returnFlights,
 		BestValueReturnFlight: bestValueReturnFlight,
+		ReturnMetadata:        returnMetadata,
 	}
 
-	// Step 8: Cache response
+	// Cache response
 	s.cache.Set(cacheKey, response)
 	log.Printf("Cached response for key: %s", cacheKey)
 
