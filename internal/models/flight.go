@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 // Flight represents a unified flight model across all providers
 type Flight struct {
@@ -42,8 +44,10 @@ type Duration struct {
 
 // Money represents monetary value with currency
 type Money struct {
-	Amount   float64 `json:"amount"`
-	Currency string  `json:"currency"`
+	Amount          float64 `json:"amount"`
+	Currency        string  `json:"currency"`
+	FormattedAmount string  `json:"formatted_amount"`
+	FormattedPrice  string  `json:"formatted_price"`
 }
 
 // BaggageInfo represents baggage allowance details

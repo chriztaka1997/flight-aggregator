@@ -220,23 +220,27 @@ curl -X POST http://localhost:8080/search \
     "origin": "CGK",
     "destination": "DPS",
     "departure_date": "2025-12-15",
-    "passengers": 1,
+    "return_date": "2025-12-20",
+    "passengers": 2,
     "cabin_class": "economy"
   },
   "metadata": {
-    "total_results": 15,
-    "providers_queried": 4,
-    "providers_succeeded": 4,
+    "total_results": 2,
+    "providers_queried": 1,
+    "providers_succeeded": 1,
     "providers_failed": 0,
-    "search_time_ms": 285,
-    "cache_hit": false
+    "search_time_ms": 53,
+    "cache_hit": false,
+    "provider_results": {
+      "Garuda Indonesia": 2
+    }
   },
   "return_metadata": {
-    "total_results": 0,
+    "total_results": 1,
     "providers_queried": 1,
     "providers_succeeded": 1,
     "providers_failed": 3,
-    "search_time_ms": 3002,
+    "search_time_ms": 3003,
     "cache_hit": false,
     "provider_results": {
       "AirAsia": 1
@@ -249,40 +253,92 @@ curl -X POST http://localhost:8080/search \
   },
   "flights": [
     {
-      "id": "QZ7250_AirAsia",
-      "provider": "AirAsia",
+      "id": "GA410_Garuda Indonesia",
+      "provider": "Garuda Indonesia",
+      "flight_number": "GA410",
       "airline": {
-        "name": "AirAsia",
-        "code": "QZ"
+        "name": "Garuda Indonesia",
+        "code": "GA"
       },
-      "flight_number": "QZ7250",
       "departure": {
         "airport": "CGK",
         "city": "Jakarta",
-        "datetime": "2025-12-15T15:15:00+07:00",
-        "timestamp": 1734246900
+        "datetime": "2025-12-15T09:30:00+07:00",
+        "timestamp": 1765765800
       },
       "arrival": {
         "airport": "DPS",
         "city": "Denpasar",
-        "datetime": "2025-12-15T20:35:00+08:00",
-        "timestamp": 1734267300
+        "datetime": "2025-12-15T12:25:00+08:00",
+        "timestamp": 1765772700
       },
       "duration": {
-        "total_minutes": 260,
-        "formatted": "4h 20m"
+        "total_minutes": 115,
+        "formatted": "1h 55m"
       },
-      "stops": 1,
+      "stops": 0,
       "price": {
-        "amount": 485000,
-        "currency": "IDR"
+        "amount": 1450000,
+        "currency": "IDR",
+        "formatted_amount": "1.450.000,00",
+        "formatted_price": "Rp 1.450.000,00"
       },
-      "available_seats": 88,
       "cabin_class": "economy",
-      "amenities": [],
+      "available_seats": 15,
+      "aircraft": "Airbus A330-300",
+      "amenities": [
+        "wifi",
+        "power_outlet",
+        "meal",
+        "entertainment"
+      ],
       "baggage": {
-        "carry_on": "Cabin baggage only",
-        "checked": "Additional fee"
+        "carry_on": "1 bag",
+        "checked": "2 bags"
+      }
+    },
+    {
+      "id": "GA400_Garuda Indonesia",
+      "provider": "Garuda Indonesia",
+      "flight_number": "GA400",
+      "airline": {
+        "name": "Garuda Indonesia",
+        "code": "GA"
+      },
+      "departure": {
+        "airport": "CGK",
+        "city": "Jakarta",
+        "datetime": "2025-12-15T06:00:00+07:00",
+        "timestamp": 1765753200
+      },
+      "arrival": {
+        "airport": "DPS",
+        "city": "Denpasar",
+        "datetime": "2025-12-15T08:50:00+08:00",
+        "timestamp": 1765759800
+      },
+      "duration": {
+        "total_minutes": 110,
+        "formatted": "1h 50m"
+      },
+      "stops": 0,
+      "price": {
+        "amount": 1250000,
+        "currency": "IDR",
+        "formatted_amount": "1.250.000,00",
+        "formatted_price": "Rp 1.250.000,00"
+      },
+      "cabin_class": "economy",
+      "available_seats": 28,
+      "aircraft": "Boeing 737-800",
+      "amenities": [
+        "wifi",
+        "meal",
+        "entertainment"
+      ],
+      "baggage": {
+        "carry_on": "1 bag",
+        "checked": "2 bags"
       }
     }
   ],
@@ -313,7 +369,9 @@ curl -X POST http://localhost:8080/search \
     "stops": 0,
     "price": {
       "amount": 1250000,
-      "currency": "IDR"
+      "currency": "IDR",
+      "formatted_amount": "1.250.000,00",
+      "formatted_price": "Rp 1.250.000,00"
     },
     "cabin_class": "economy",
     "available_seats": 28,
@@ -356,7 +414,9 @@ curl -X POST http://localhost:8080/search \
       "stops": 0,
       "price": {
         "amount": 650000,
-        "currency": "IDR"
+        "currency": "IDR",
+        "formatted_amount": "650.000,00",
+        "formatted_price": "Rp 650.000,00"
       },
       "cabin_class": "economy",
       "available_seats": 67,
@@ -395,7 +455,9 @@ curl -X POST http://localhost:8080/search \
     "stops": 0,
     "price": {
       "amount": 650000,
-      "currency": "IDR"
+      "currency": "IDR",
+      "formatted_amount": "650.000,00",
+      "formatted_price": "Rp 650.000,00"
     },
     "cabin_class": "economy",
     "available_seats": 67,
