@@ -2,8 +2,10 @@ package aggregator
 
 import (
 	"context"
+	"errors"
 	"flight-aggregator/internal/models"
 	"flight-aggregator/internal/providers"
+	"flight-aggregator/pkg/retry"
 	"fmt"
 	"strings"
 	"sync"
@@ -28,15 +30,17 @@ type AggregatedResults struct {
 
 // Aggregator handles parallel queries to multiple flight providers
 type Aggregator struct {
-	providers []providers.Provider
-	timeout   time.Duration
+	providers   []providers.Provider
+	timeout     time.Duration
+	retryParams retry.Params
 }
 
 // NewAggregator creates a new aggregator with the given providers and timeout
-func NewAggregator(providerList []providers.Provider, timeout time.Duration) *Aggregator {
+func NewAggregator(providerList []providers.Provider, timeout time.Duration, retryParams retry.Params) *Aggregator {
 	return &Aggregator{
-		providers: providerList,
-		timeout:   timeout,
+		providers:   providerList,
+		timeout:     timeout,
+		retryParams: retryParams,
 	}
 }
 
@@ -106,8 +110,26 @@ func (a *Aggregator) SearchAll(ctx context.Context, req models.SearchRequest) (*
 func (a *Aggregator) queryProvider(ctx context.Context, provider providers.Provider, req models.SearchRequest, results chan<- ProviderResult) {
 	providerStart := time.Now()
 
-	// Execute search with context
-	flights, err := provider.Search(ctx, req)
+	var flights []models.Flight
+	var err error
+
+	// Execute search with retry logic and exponential backoff
+	retryErr := retry.RetryWithCheck(ctx, a.retryParams, func() (error, bool) {
+		flights, err = provider.Search(ctx, req)
+
+		// Check if error is retryable
+		if err != nil {
+			shouldRetry := isRetryableError(err)
+			return err, shouldRetry
+		}
+
+		return nil, false
+	}, fmt.Sprintf("provider %s", provider.Name()))
+
+	// Use the retry error if search failed
+	if retryErr != nil {
+		err = retryErr
+	}
 
 	// Send result to channel
 	results <- ProviderResult{
@@ -116,6 +138,29 @@ func (a *Aggregator) queryProvider(ctx context.Context, provider providers.Provi
 		Error:    err,
 		Duration: time.Since(providerStart),
 	}
+}
+
+// isRetryableError determines if an error should trigger a retry
+func isRetryableError(err error) bool {
+	// Don't retry if no error
+	if err == nil {
+		return false
+	}
+
+	// Don't retry for "no flights found" - this is a valid response
+	if errors.Is(err, providers.ErrNoFlightsFound) {
+		return false
+	}
+
+	// Retry for timeout, unavailable, and invalid response errors
+	if errors.Is(err, providers.ErrProviderTimeout) ||
+		errors.Is(err, providers.ErrProviderUnavailable) ||
+		errors.Is(err, providers.ErrInvalidResponse) {
+		return true
+	}
+
+	// For unknown errors, retry as they might be transient
+	return true
 }
 
 // collectResults gathers all provider results from the channel

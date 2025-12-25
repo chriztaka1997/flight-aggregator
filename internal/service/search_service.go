@@ -10,6 +10,7 @@ import (
 	"flight-aggregator/internal/ranking"
 	"flight-aggregator/internal/validator"
 	"flight-aggregator/pkg/config"
+	"flight-aggregator/pkg/retry"
 	"log"
 	"time"
 )
@@ -80,9 +81,14 @@ func NewSearchServiceWithConfig(cfg *config.Config) *SearchService {
 	aggregatorTimeout, _ := time.ParseDuration(cfg.Provider.Timeout)
 	cacheTTL, _ := time.ParseDuration(cfg.Cache.TTL)
 
+	// Create retry params from config
+	retryParams := retry.FromConfig(cfg.Retry)
+	log.Printf("Retry configuration: max_attempts=%d, initial_delay=%v, max_delay=%v, multiplier=%.1f",
+		retryParams.MaxAttempts, retryParams.InitialDelay, retryParams.MaxDelay, retryParams.BackoffMultiplier)
+
 	return &SearchService{
 		providers:  providerList,
-		aggregator: aggregator.NewAggregator(providerList, aggregatorTimeout),
+		aggregator: aggregator.NewAggregator(providerList, aggregatorTimeout, retryParams),
 		cache:      cache.New(cacheTTL),
 		filter:     filter.NewFilterEngine(),
 		sorter:     filter.NewSorter(),
