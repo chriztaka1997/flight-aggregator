@@ -231,6 +231,22 @@ curl -X POST http://localhost:8080/search \
     "search_time_ms": 285,
     "cache_hit": false
   },
+  "return_metadata": {
+    "total_results": 0,
+    "providers_queried": 1,
+    "providers_succeeded": 1,
+    "providers_failed": 3,
+    "search_time_ms": 3002,
+    "cache_hit": false,
+    "provider_results": {
+      "AirAsia": 1
+    },
+    "provider_errors": {
+      "Batik Air": "no flights found",
+      "Garuda Indonesia": "no flights found",
+      "Lion Air": "no flights found"
+    }
+  },
   "flights": [
     {
       "id": "QZ7250_AirAsia",
@@ -269,7 +285,127 @@ curl -X POST http://localhost:8080/search \
         "checked": "Additional fee"
       }
     }
-  ]
+  ],
+  "best_value_flight": {
+    "id": "GA400_Garuda Indonesia",
+    "provider": "Garuda Indonesia",
+    "flight_number": "GA400",
+    "airline": {
+      "name": "Garuda Indonesia",
+      "code": "GA"
+    },
+    "departure": {
+      "airport": "CGK",
+      "city": "Jakarta",
+      "datetime": "2025-12-15T06:00:00+07:00",
+      "timestamp": 1765753200
+    },
+    "arrival": {
+      "airport": "DPS",
+      "city": "Denpasar",
+      "datetime": "2025-12-15T08:50:00+08:00",
+      "timestamp": 1765759800
+    },
+    "duration": {
+      "total_minutes": 110,
+      "formatted": "1h 50m"
+    },
+    "stops": 0,
+    "price": {
+      "amount": 1250000,
+      "currency": "IDR"
+    },
+    "cabin_class": "economy",
+    "available_seats": 28,
+    "aircraft": "Boeing 737-800",
+    "amenities": [
+      "wifi",
+      "meal",
+      "entertainment"
+    ],
+    "baggage": {
+      "carry_on": "1 bag",
+      "checked": "2 bags"
+    }
+  },
+  "return_flights": [
+    {
+      "id": "QZ521_AirAsia",
+      "provider": "AirAsia",
+      "flight_number": "QZ521",
+      "airline": {
+        "name": "AirAsia",
+        "code": "QZ"
+      },
+      "departure": {
+        "airport": "DPS",
+        "city": "Denpasar",
+        "datetime": "2025-12-20T04:45:00+08:00",
+        "timestamp": 1766177100
+      },
+      "arrival": {
+        "airport": "CGK",
+        "city": "Jakarta",
+        "datetime": "2025-12-20T07:25:00+07:00",
+        "timestamp": 1766190300
+      },
+      "duration": {
+        "total_minutes": 100,
+        "formatted": "1h 40m"
+      },
+      "stops": 0,
+      "price": {
+        "amount": 650000,
+        "currency": "IDR"
+      },
+      "cabin_class": "economy",
+      "available_seats": 67,
+      "aircraft": "",
+      "amenities": [],
+      "baggage": {
+        "carry_on": "Cabin baggage only",
+        "checked": "checked bags additional fee"
+      }
+    }
+  ],
+  "best_value_return_flight": {
+    "id": "QZ521_AirAsia",
+    "provider": "AirAsia",
+    "flight_number": "QZ521",
+    "airline": {
+      "name": "AirAsia",
+      "code": "QZ"
+    },
+    "departure": {
+      "airport": "DPS",
+      "city": "Denpasar",
+      "datetime": "2025-12-20T04:45:00+08:00",
+      "timestamp": 1766177100
+    },
+    "arrival": {
+      "airport": "CGK",
+      "city": "Jakarta",
+      "datetime": "2025-12-20T07:25:00+07:00",
+      "timestamp": 1766190300
+    },
+    "duration": {
+      "total_minutes": 100,
+      "formatted": "1h 40m"
+    },
+    "stops": 0,
+    "price": {
+      "amount": 650000,
+      "currency": "IDR"
+    },
+    "cabin_class": "economy",
+    "available_seats": 67,
+    "aircraft": "",
+    "amenities": [],
+    "baggage": {
+      "carry_on": "Cabin baggage only",
+      "checked": "checked bags additional fee"
+    }
+  }
 }
 ```
 
